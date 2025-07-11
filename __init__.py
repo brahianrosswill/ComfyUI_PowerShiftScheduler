@@ -2,7 +2,7 @@ import torch
 import numpy
 from comfy.samplers import SchedulerHandler, SCHEDULER_HANDLERS, SCHEDULER_NAMES
 
-def power_shift_scheduler(model_sampling, steps, power=2.0, midpoint_shift=1.0, discard_penultimate=True):
+def power_shift_scheduler(model_sampling, steps, power=2.0, midpoint_shift=1.0, discard_penultimate=False):
     total_timesteps = (len(model_sampling.sigmas) - 1)
     x = numpy.linspace(0, 1, steps, endpoint=False)
     x = x**midpoint_shift
