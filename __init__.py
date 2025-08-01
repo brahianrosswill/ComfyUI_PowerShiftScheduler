@@ -1,5 +1,6 @@
 import torch
 import numpy
+import scipy.stats
 from comfy.samplers import SchedulerHandler, SCHEDULER_HANDLERS, SCHEDULER_NAMES
 
 def power_shift_scheduler(model_sampling, steps, power=2.0, midpoint_shift=1.0, discard_penultimate=False):
@@ -58,6 +59,102 @@ if scheduler_name not in SCHEDULER_HANDLERS:
     SCHEDULER_HANDLERS[scheduler_name] = scheduler_handler
     if scheduler_name not in SCHEDULER_NAMES:
         SCHEDULER_NAMES.append(scheduler_name)
+
+def modify_by_twenties(num: int) -> int:
+    return num + (num // 20)
+
+def modify_by_tens(num: int) -> int:
+    return num + (num // 10)
+
+def beta_33_scheduler(model_sampling, steps, alpha=0.3, beta=0.3):
+    total_timesteps = (len(model_sampling.sigmas) - 1)
+    ts = 1 - numpy.linspace(0, 1, steps, endpoint=False)
+    ts = numpy.rint(scipy.stats.beta.ppf(ts, alpha, beta) * total_timesteps)
+
+    sigs = []
+    last_t = -1
+    for t in ts:
+        if t != last_t:
+            sigs += [float(model_sampling.sigmas[int(t)])]
+        last_t = t
+    sigs += [0.0]
+    return torch.FloatTensor(sigs)
+
+scheduler_name = "beta_33"
+if scheduler_name not in SCHEDULER_HANDLERS:
+    scheduler_handler = SchedulerHandler(handler=beta_33_scheduler, use_ms=True)
+    SCHEDULER_HANDLERS[scheduler_name] = scheduler_handler
+    if scheduler_name not in SCHEDULER_NAMES:
+        SCHEDULER_NAMES.append(scheduler_name)
+
+
+def beta_44_scheduler(model_sampling, steps, alpha=0.4, beta=0.4):
+    total_timesteps = (len(model_sampling.sigmas) - 1)
+    ts = 1 - numpy.linspace(0, 1, steps, endpoint=False)
+    ts = numpy.rint(scipy.stats.beta.ppf(ts, alpha, beta) * total_timesteps)
+
+    sigs = []
+    last_t = -1
+    for t in ts:
+        if t != last_t:
+            sigs += [float(model_sampling.sigmas[int(t)])]
+        last_t = t
+    sigs += [0.0]
+    return torch.FloatTensor(sigs)
+
+scheduler_name = "beta_44"
+if scheduler_name not in SCHEDULER_HANDLERS:
+    scheduler_handler = SchedulerHandler(handler=beta_44_scheduler, use_ms=True)
+    SCHEDULER_HANDLERS[scheduler_name] = scheduler_handler
+    if scheduler_name not in SCHEDULER_NAMES:
+        SCHEDULER_NAMES.append(scheduler_name)
+
+
+def beta_32_scheduler(model_sampling, steps, alpha=0.3, beta=0.2):
+    steps = modify_by_twenties(steps)
+    total_timesteps = (len(model_sampling.sigmas) - 1)
+    ts = 1 - numpy.linspace(0, 1, steps, endpoint=False)
+    ts = numpy.rint(scipy.stats.beta.ppf(ts, alpha, beta) * total_timesteps)
+
+    sigs = []
+    last_t = -1
+    for t in ts:
+        if t != last_t:
+            sigs += [float(model_sampling.sigmas[int(t)])]
+        last_t = t
+    sigs += [0.0]
+    return torch.FloatTensor(sigs)
+
+scheduler_name = "beta_32"
+if scheduler_name not in SCHEDULER_HANDLERS:
+    scheduler_handler = SchedulerHandler(handler=beta_32_scheduler, use_ms=True)
+    SCHEDULER_HANDLERS[scheduler_name] = scheduler_handler
+    if scheduler_name not in SCHEDULER_NAMES:
+        SCHEDULER_NAMES.append(scheduler_name)
+
+
+def beta_42_scheduler(model_sampling, steps, alpha=0.4, beta=0.2):
+    steps = modify_by_tens(steps)
+    total_timesteps = (len(model_sampling.sigmas) - 1)
+    ts = 1 - numpy.linspace(0, 1, steps, endpoint=False)
+    ts = numpy.rint(scipy.stats.beta.ppf(ts, alpha, beta) * total_timesteps)
+
+    sigs = []
+    last_t = -1
+    for t in ts:
+        if t != last_t:
+            sigs += [float(model_sampling.sigmas[int(t)])]
+        last_t = t
+    sigs += [0.0]
+    return torch.FloatTensor(sigs)
+
+scheduler_name = "beta_42"
+if scheduler_name not in SCHEDULER_HANDLERS:
+    scheduler_handler = SchedulerHandler(handler=beta_42_scheduler, use_ms=True)
+    SCHEDULER_HANDLERS[scheduler_name] = scheduler_handler
+    if scheduler_name not in SCHEDULER_NAMES:
+        SCHEDULER_NAMES.append(scheduler_name)
+
 
 NODE_CLASS_MAPPINGS = {
     "PowerShiftScheduler": PowerShiftSchedulerNode,
